@@ -32,13 +32,14 @@ type ProductIndex struct {
 }
 
 type ProductData struct {
-	Products     map[string]Item
+	ProductsMap  map[string]Item
 	ProductIndex ProductIndex
+	Products     []Item
 }
 
 func New() *ProductData {
 	return &ProductData{
-		Products: map[string]Item{},
+		ProductsMap: map[string]Item{},
 		ProductIndex: ProductIndex{
 			Titles:        DS{},
 			BrandNames:    DS{},
@@ -50,17 +51,20 @@ func New() *ProductData {
 				CategoryIds: map[string]string{},
 			},
 		},
+		Products: []Item{},
 	}
 
 }
 
 func (pd *ProductData) Add(item Item) {
-	pd.Products[item.ProductId] = item
+	pd.ProductsMap[item.ProductId] = item
 	product_id := item.ProductId
 	brand_id := item.BrandId
 	category_id := item.CategoryId
 
-	pd.Products[product_id] = item
+	pd.ProductsMap[product_id] = item
+
+	pd.Products = append(pd.Products, item)
 
 	pd.ProductIndex.Titles[item.Title] = append(pd.ProductIndex.Titles[item.Title], product_id)
 
@@ -72,11 +76,11 @@ func (pd *ProductData) Add(item Item) {
 
 }
 
-func (pd *ProductData) GetAll() map[string]Item {
+func (pd *ProductData) GetAll() []Item {
 	return pd.Products
 }
 
-func (pd *ProductData) Find(group string, values []string) ([]Item, error) {
+func (pd *ProductData) Find(group string, values []string) (map[string][]Item, error) {
 
 	product_ids := map[string]bool{}
 
@@ -121,25 +125,28 @@ func (pd *ProductData) Find(group string, values []string) ([]Item, error) {
 		return nil, errors.New("InvalidQueryException")
 	}
 
+	jsonResponse := map[string][]Item{}
 	results := []Item{}
-
 	for id, _ := range product_ids {
-		results = append(results, pd.Products[id])
+		results = append(results, pd.ProductsMap[id])
 	}
-
-	return results, nil
+	//need to make it a map so it will output correctly in json
+	jsonResponse["Products"] = results
+	return jsonResponse, nil
 
 }
 
-func (pd *ProductData) ReturnPage(results []Item, from int, size int) ([]Item, error) {
+func (pd *ProductData) ReturnPage(results map[string][]Item, from int, size int) (map[string][]Item, error) {
 
+	actual_result := results["Products"]
 	starting_index := from * size
 
-	if len(results) <= size || starting_index >= len(results) {
+	if len(actual_result) <= size || starting_index >= len(actual_result) {
 		//there has been a error the pagination inputted is out of bounds of the data given or resulted
 		return nil, errors.New("OutofBoundsException")
 	} else {
-		return results[starting_index : starting_index+size], nil
+		results["Products"] = actual_result[starting_index : starting_index+size]
+		return results, nil
 	}
 
 }

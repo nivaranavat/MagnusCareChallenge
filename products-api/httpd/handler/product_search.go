@@ -24,20 +24,21 @@ func ProductSearch(products *product.ProductData) gin.HandlerFunc {
 			Pagination: requestBody.Pagination,
 		}
 
-		results := []product.Item{}
+		results := map[string][]product.Item{}
 		conditions := q.GetConditions()
 		pagination := q.GetPagination()
 
-		fmt.Println("Conditions:", conditions)
-		fmt.Println("Pagination:", pagination)
+		//fmt.Println("Conditions:", conditions)
+		//fmt.Println("Pagination:", pagination)
 		flag := false
+
 		//loop through the different conditions and get results
 		for _, cond := range conditions {
 			group := cond.Type
 			values := cond.Values
 			search_result, err1 := products.Find(group, values)
 			if err1 == nil {
-				results = append(results, search_result...)
+				results["Products"] = append(results["Products"], search_result["Products"]...)
 			} else {
 				flag = true
 				fmt.Println(err1)
@@ -47,13 +48,13 @@ func ProductSearch(products *product.ProductData) gin.HandlerFunc {
 		}
 
 		//cut the answer based on pagination given or not given
-		results, err2 := products.ReturnPage(results, pagination.From, pagination.Size)
+		_, err2 := products.ReturnPage(results, pagination.From, pagination.Size)
 		if !flag {
 			if err2 != nil {
 				fmt.Println(err2)
 				c.JSON(http.StatusConflict, "The Inputted Pagination is invalid")
 			} else {
-				fmt.Println("Results for search query", results)
+				//fmt.Println("Results for search query", results)
 				c.JSON(http.StatusOK, results)
 			}
 		}

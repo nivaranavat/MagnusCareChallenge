@@ -10,6 +10,8 @@ import (
 func ProductGet(products *product.ProductData) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		results := products.GetAll()
-		c.JSON(http.StatusOK, results)
+		jsonResponse := map[string][]product.Item{}
+		jsonResponse["Products"] = results
+		c.JSON(http.StatusOK, jsonResponse)
 	}
 }
