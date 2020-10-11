@@ -80,7 +80,7 @@ func (pd *ProductData) GetAll() []Item {
 	return pd.Products
 }
 
-func (pd *ProductData) Find(group string, values []string) (map[string][]Item, error) {
+func (pd *ProductData) Find(group string, values []string) ([]Item, error) {
 
 	product_ids := map[string]bool{}
 
@@ -125,28 +125,24 @@ func (pd *ProductData) Find(group string, values []string) (map[string][]Item, e
 		return nil, errors.New("InvalidQueryException")
 	}
 
-	jsonResponse := map[string][]Item{}
 	results := []Item{}
 	for id, _ := range product_ids {
 		results = append(results, pd.ProductsMap[id])
 	}
 	//need to make it a map so it will output correctly in json
-	jsonResponse["Products"] = results
-	return jsonResponse, nil
+	return results, nil
 
 }
 
-func (pd *ProductData) ReturnPage(results map[string][]Item, from int, size int) (map[string][]Item, error) {
+func (pd *ProductData) ReturnPage(results []Item, from int, size int) ([]Item, error) {
 
-	actual_result := results["Products"]
 	starting_index := from * size
 
-	if len(actual_result) <= size || starting_index >= len(actual_result) {
+	if len(results) <= size || starting_index >= len(results) {
 		//there has been a error the pagination inputted is out of bounds of the data given or resulted
 		return nil, errors.New("OutofBoundsException")
 	} else {
-		results["Products"] = actual_result[starting_index : starting_index+size]
-		return results, nil
+		return results[starting_index : starting_index+size], nil
 	}
 
 }
